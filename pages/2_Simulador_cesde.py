@@ -67,9 +67,10 @@ if not filtered_data.empty:
 else:
     st.write("No hay datos disponibles para los filtros seleccionados.")
 
-# Gráfico 1: Nivel
+# Gráfico  1: Conocimiento, Desempeño y Producto por Nivel
 if not filtered_data.empty:
-    grouped_data = filtered_data.groupby('NIVEL').mean()
+    numeric_columns = ['CONOCIMIENTO', 'DESEMPEÑO', 'PRODUCTO']
+    grouped_data = filtered_data.groupby('NIVEL')[numeric_columns].mean()
     fig2 = go.Figure(data=[
         go.Bar(name='CONOCIMIENTO', x=grouped_data.index, y=grouped_data['CONOCIMIENTO']),
         go.Bar(name='DESEMPEÑO', x=grouped_data.index, y=grouped_data['DESEMPEÑO']),
@@ -78,7 +79,7 @@ if not filtered_data.empty:
     fig2.update_layout(barmode='stack')
     st.plotly_chart(fig2, use_container_width=True)
 
-# Gráfico 2: Momento
+# Gráfico 2: Momentos
 if not filtered_data.empty:
     fig3 = go.Figure()
     fig3.add_trace(go.Scatter(x=filtered_data['MOMENTO'], y=filtered_data['CONOCIMIENTO'], mode='lines+markers', name='CONOCIMIENTO'))
@@ -86,7 +87,7 @@ if not filtered_data.empty:
     fig3.add_trace(go.Scatter(x=filtered_data['MOMENTO'], y=filtered_data['PRODUCTO'], mode='lines+markers', name='PRODUCTO'))
     st.plotly_chart(fig3, use_container_width=True)
 
-# Gráfico 3: distribución de estudiantes por Nivel
+# Gráfico 3: distribución de estudiantes por nivel
 if not filtered_data.empty:
     nivel_counts = filtered_data['NIVEL'].value_counts()
     fig4 = go.Figure(data=[go.Pie(labels=nivel_counts.index, values=nivel_counts.values)])
