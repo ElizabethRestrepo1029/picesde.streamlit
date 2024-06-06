@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.figure_factory as ff
-
+import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+
+st.set_page_config(layout="wide")
 
 st.write("Simulador Cesde")
 try:
@@ -24,7 +26,7 @@ momentosU = sorted(df['MOMENTO'].unique())
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    gruposU.insert(0,"Todos")
+    gruposU.insert(0, "Todos")
     optionGrupo = st.selectbox('Grupo', (gruposU))
 
 with col2:       
@@ -52,106 +54,40 @@ if optionNivel != 'Todos':
 if optionJornada != 'Todos':
     filtered_data = filtered_data[filtered_data['JORNADA'] == optionJornada]
 
-import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-
-st.set_page_config(layout="wide")
-# Set the page title and header
-st.title("Simulador CESDE Bello")
-
-df = pd.read_csv('datasets\cesde.csv')
-
-gruposU = sorted(df['GRUPO'].unique())
-nivelesU = sorted(df['NIVEL'].unique())
-jornadasU =  sorted(df['JORNADA'].unique())
-horarioU =  sorted(df['HORARIO'].unique())
-submodulosU =  sorted(df['SUBMODULO'].unique())
-docentesU =  sorted(df['DOCENTE'].unique())
-momentosU =  sorted(df['MOMENTO'].unique())
-
-# -----------------------------------------------------------------------------------
-def filtro1():    
-    col1, col2 = st.columns(2)
-    with col1:
-        grupo = st.selectbox("Grupo",gruposU)
-    with col2:
-        momento = st.selectbox("Momento",momentosU)
-    resultado = df[(df['GRUPO']==grupo)&(df['MOMENTO']==momento)]
-   
-    resultado= resultado.reset_index(drop=True) 
-    # Grafico de barras
-    estudiante=resultado['NOMBRE']
+# Crear el gráfico de barras
+if not filtered_data.empty:
+    NOTAS = filtered_data['NOMBRE']
     fig = go.Figure(data=[
-        go.Bar(name='CONOCIMIENTO', x=estudiante, y=resultado['CONOCIMIENTO']),
-        go.Bar(name='DESEMPEÑO', x=estudiante, y=resultado['DESEMPEÑO']),
-        go.Bar(name='PRODUCTO', x=estudiante, y=resultado['PRODUCTO'])
-    ])   
+        go.Bar(name='CONOCIMIENTO', x=NOTAS, y=filtered_data['CONOCIMIENTO']),
+        go.Bar(name='DESEMPEÑO', x=NOTAS, y=filtered_data['DESEMPEÑO']),
+        go.Bar(name='PRODUCTO', x=NOTAS, y=filtered_data['PRODUCTO'])
+    ])
     fig.update_layout(barmode='group')
     st.plotly_chart(fig, use_container_width=True)
-    # Tabla
-    st.table(resultado[["NOMBRE","CONOCIMIENTO","DESEMPEÑO","PRODUCTO"]])
-    
-# -----------------------------------------------------------------------------------
-def filtro2():
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        grupo = st.selectbox("Grupo",gruposU)
-    with col2:
-        nombres = df[df['GRUPO']==grupo]
-        nombre = st.selectbox("Estudiante",nombres["NOMBRE"])
-    with col3:
-        momentosU.append("Todos")
-        momento = st.selectbox("Momento",momentosU)   
+else:
+    st.write("No hay datos disponibles para los filtros seleccionados.")
 
-    if momento == "Todos":
-        resultado = df[(df['GRUPO']==grupo)&(df['NOMBRE']==nombre)]
-        # Grafico de barras
-        momentos=sorted(df['MOMENTO'].unique())
-        fig = go.Figure(data=[
-            go.Bar(name='CONOCIMIENTO', x=momentos, y=resultado['CONOCIMIENTO']),
-            go.Bar(name='DESEMPEÑO', x=momentos, y=resultado['DESEMPEÑO']),
-            go.Bar(name='PRODUCTO', x=momentos, y=resultado['PRODUCTO'])
-        ])   
-        fig.update_layout(barmode='group')
-        st.plotly_chart(fig, use_container_width=True)
-        resultado= resultado.reset_index(drop=True) 
-        m1 = resultado.loc[0,['CONOCIMIENTO','DESEMPEÑO','PRODUCTO']]
-        m2 = resultado.loc[1,['CONOCIMIENTO','DESEMPEÑO','PRODUCTO']]
-        m3 = resultado.loc[2,['CONOCIMIENTO','DESEMPEÑO','PRODUCTO']]
-        tm = pd.Series([m1.mean(),m2.mean(),m3.mean()])       
-        st.subheader("Promedio")
-        st.subheader(round(tm.mean(),1)) 
-    else :   
-        resultado = df[(df['GRUPO']==grupo)&(df['MOMENTO']==momento)&(df['NOMBRE']==nombre)]
-        # Grafico de barras
-        estudiante=resultado['NOMBRE']
-        fig = go.Figure(data=[
-            go.Bar(name='CONOCIMIENTO', x=estudiante, y=resultado['CONOCIMIENTO']),
-            go.Bar(name='DESEMPEÑO', x=estudiante, y=resultado['DESEMPEÑO']),
-            go.Bar(name='PRODUCTO', x=estudiante, y=resultado['PRODUCTO'])
-        ])   
-        fig.update_layout(barmode='group')
-        st.plotly_chart(fig, use_container_width=True)
+# Gráfico 1: Nivel
+if not filtered_data.empty:
+    grouped_data = filtered_data.groupby('NIVEL').mean()
+    fig2 = go.Figure(data=[
+        go.Bar(name='CONOCIMIENTO', x=grouped_data.index, y=grouped_data['CONOCIMIENTO']),
+        go.Bar(name='DESEMPEÑO', x=grouped_data.index, y=grouped_data['DESEMPEÑO']),
+        go.Bar(name='PRODUCTO', x=grouped_data.index, y=grouped_data['PRODUCTO'])
+    ])
+    fig2.update_layout(barmode='stack')
+    st.plotly_chart(fig2, use_container_width=True)
 
-        resultado= resultado.reset_index(drop=True) 
-        conocimiento = resultado.loc[0,['CONOCIMIENTO','DESEMPEÑO','PRODUCTO']]
-        st.subheader("Promedio")
-        st.subheader(round(conocimiento.mean(),1)) 
-  
+# Gráfico 2: Momento
+if not filtered_data.empty:
+    fig3 = go.Figure()
+    fig3.add_trace(go.Scatter(x=filtered_data['MOMENTO'], y=filtered_data['CONOCIMIENTO'], mode='lines+markers', name='CONOCIMIENTO'))
+    fig3.add_trace(go.Scatter(x=filtered_data['MOMENTO'], y=filtered_data['DESEMPEÑO'], mode='lines+markers', name='DESEMPEÑO'))
+    fig3.add_trace(go.Scatter(x=filtered_data['MOMENTO'], y=filtered_data['PRODUCTO'], mode='lines+markers', name='PRODUCTO'))
+    st.plotly_chart(fig3, use_container_width=True)
 
-filtros =[
-    "Notas por grupo",
-    "Notas por estudiante"
-]
-
-filtro = st.selectbox("Filtros",filtros)
-
-if filtro:
-    filtro_index = filtros.index(filtro)
-
-    if filtro_index == 0:
-        filtro1()
-    elif filtro_index == 1:
-        filtro2()
+# Gráfico 3: distribución de estudiantes por Nivel
+if not filtered_data.empty:
+    nivel_counts = filtered_data['NIVEL'].value_counts()
+    fig4 = go.Figure(data=[go.Pie(labels=nivel_counts.index, values=nivel_counts.values)])
+    st.plotly_chart(fig4, use_container_width=True)
