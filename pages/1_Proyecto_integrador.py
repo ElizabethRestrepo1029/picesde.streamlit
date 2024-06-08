@@ -6,9 +6,7 @@ import os
 st.title("Proyecto Integrador - Ventas Restaurante")
 
 # Especificar la ruta del archivo CSV
-folder_path = 'static/datasets'
-file_name = 'Restaurante.csv'
-file_path = os.path.join(folder_path, file_name)
+file_path='static\Restaurante.csv'
 
 # Intentar leer el archivo CSV con diferentes encodings
 try:
