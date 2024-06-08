@@ -5,7 +5,7 @@ import plotly.express as px
 st.title("Proyecto Integrador - Ventas Restaurante")
 
 # Especificar la ruta del archivo CSV
-file_path = 'static/datasets/Restaurante.csv'
+file_path = 'static\Restaurante.csv'
 
 # Intentar leer el archivo CSV con diferentes encodings
 try:
