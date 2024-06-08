@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
 
 st.title("Proyecto Integrador - Ventas Restaurante")
 
 # Especificar la ruta del archivo CSV
-file_path='static\Restaurante.csv'
+file_path = 'static\Restaurante.csv'
 
 # Intentar leer el archivo CSV con diferentes encodings
 try:
@@ -28,7 +27,7 @@ df['Fecha'] = pd.to_datetime(df['Fecha'], format='%d/%m/%Y', errors='coerce')
 # Filtrar las filas con fechas no convertibles
 df = df.dropna(subset=['Fecha'])
 
-# Extraer mes, día y hora de la columna 'Fecha'
+# Extraer mes y hora de la columna 'Fecha'
 df['Mes'] = df['Fecha'].dt.to_period('M')
 df['Dia'] = df['Fecha'].dt.date
 df['Hora'] = df['Fecha'].dt.hour
@@ -37,7 +36,8 @@ df['Hora'] = df['Fecha'].dt.hour
 productosU = sorted(df['Producto'].unique())
 mesesU = sorted(df['Mes'].unique().astype(str))
 diasU = sorted(df['Dia'].unique())
-horasU = sorted(df['Horas'].unique())
+horasU = sorted(df['Hora'].unique())
+
 # Configurar las columnas y selectores
 col1, col2 = st.columns(2)
 
@@ -56,8 +56,8 @@ with col3:
     optionDia = st.selectbox('Día', (diasU))
 
 with col4:
-    horasU = list(range(24))
-    optionHora = st.slider('Rango de Hora', min_value=0, max_value=23, value=(0, 23))
+    horasU = list(range(12))
+    optionHora = st.slider('Rango de Hora', min_value=12, max_value=23, value=(12, 23))    
 
 # Filtrar los datos según las opciones seleccionadas
 filtered_data = df
@@ -70,8 +70,8 @@ if optionProducto != "Todos":
 if optionDia != "Todos":
     filtered_data = filtered_data[filtered_data['Dia'] == optionDia]
 
-# Filtrar por rango de horas
-filtered_data = filtered_data[(filtered_data['Hora'] >= optionHora[0]) & (filtered_data['Hora'] <= optionHora[1])]
+if optionHora != "Todas":
+    filtered_data = filtered_data[filtered_data['Hora'] == int(optionHora)]
 
 # Crear un gráfico de barras para el total de ventas por producto
 ventas_por_producto = filtered_data.groupby('Producto')['Total'].sum().reset_index()
