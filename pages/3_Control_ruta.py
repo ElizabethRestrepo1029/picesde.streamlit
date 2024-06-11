@@ -62,14 +62,14 @@ except FileNotFoundError:
 df = df.dropna(subset=['HORA DE INICIO', 'HORA ESTIMADA DE LLEGADA', 'HORA REAL DE LLEGADA'])
 
 # Convertir las columnas de hora a datetime
-df['HORA DE INICIO'] = pd.to_datetime(df['HORA DE INICIO'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
-df['HORA ESTIMADA DE LLEGADA'] = pd.to_datetime(df['HORA ESTIMADA DE LLEGADA'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
-df['HORA REAL DE LLEGADA'] = pd.to_datetime(df['HORA REAL DE LLEGADA'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
+df['HORA DE INICIO'] = pd.to_datetime(df['HORA DE INICIO'], format='%I:%M:%S %p', errors='coerce')
+df['HORA ESTIMADA DE LLEGADA'] = pd.to_datetime(df['HORA ESTIMADA DE LLEGADA'], format='%I:%M:%S %p', errors='coerce')
+df['HORA REAL DE LLEGADA'] = pd.to_datetime(df['HORA REAL DE LLEGADA'], format='%I:%M:%S %p', errors='coerce')
 
 # Extraer mes, día y hora de la columna 'HORA DE INICIO'
-df['Mes'] = df['HORA DE INICIO'].dt.strftime('%Y-%m')
-df['Dia'] = df['HORA DE INICIO'].dt.date
-df['Hora'] = df['HORA DE INICIO'].dt.hour
+df['Mes'] = df['FECHA'].dt.strftime('%Y-%m')
+df['Dia'] = df['FECHA'].dt.date
+df['Hora'] = df['FECHA'].dt.hour
 
 # Obtener las opciones únicas de cada filtro
 vehiculosU = sorted(df['VEHICULO'].unique())
