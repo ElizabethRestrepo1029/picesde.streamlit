@@ -2,45 +2,54 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.write("Control de rutas")
+# Configurar el tema de Streamlit
+st.set_page_config(
+    page_title="Control de rutas",
+    page_icon=":car:",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Leer el archivo CSV
 try:
-    df = pd.read_csv('static\controlrutas.csv') 
+    df = pd.read_csv('static/controlruta.csv')
 except FileNotFoundError:
     st.error("El archivo de datos no se encontró. Asegúrate de que el archivo esté en la ruta correcta.")
     st.stop()
-# Convertir las columnas de fecha a tipo datetime
-df['HORA DE INICIO'] = pd.to_datetime(df['HORA DE INICIO'])
-df['HORA ESTIMADA DE LLEGADA'] = pd.to_datetime(df['HORA ESTIMADA DE LLEGADA'])
-df['HORA REAL DE LLEGADA'] = pd.to_datetime(df['HORA REAL DE LLEGADA'])
+# Filtrar y seleccionar solo las columnas relevantes
+df_filt = df[['VEHICULO', 'CONDUCTOR', 'ESTADO']]
 
-# Filtro por ruta
-ruta_seleccionada = st.selectbox('Selecciona una ruta:', df['RUTA'].unique())
-df_filtrado_ruta = df[df['RUTA'] == ruta_seleccionada]
+# Eliminar filas con valores nulos en las columnas seleccionadas
+df_filt = df_filt.dropna()
 
-# Filtro por conductor
-conductor_seleccionado = st.selectbox('Selecciona un conductor:', df['CONDUCTOR'].unique())
-df_filtrado_conductor = df[df['CONDUCTOR'] == conductor_seleccionado]
+# Filtros
+filtro_vehiculo = st.selectbox('Selecciona un vehículo:', ['Todos'] + list(df_filt['VEHICULO'].unique()))
+if filtro_vehiculo != 'Todos':
+    df_filt = df_filt[df_filt['VEHICULO'] == filtro_vehiculo]
 
-# Filtro por estado del viaje
-estado_seleccionado = st.selectbox('Selecciona un estado:', df['ESTADO'].unique())
-df_filtrado_estado = df[df['ESTADO'] == estado_seleccionado]
+filtro_conductor = st.selectbox('Selecciona un conductor:', ['Todos'] + list(df_filt['CONDUCTOR'].unique()))
+if filtro_conductor != 'Todos':
+    df_filt = df_filt[df_filt['CONDUCTOR'] == filtro_conductor]
 
-# Gráfico 1: Distribución de la diferencia entre el tiempo estimado y real de llegada
-st.write("Distribución de la diferencia entre tiempo estimado y real de llegada:")
-fig_hist = px.histogram(df, x='DIFERENCIA', nbins=10, title='Distribución de la diferencia')
-st.plotly_chart(fig_hist)
+filtro_estado = st.selectbox('Selecciona un estado:', ['Todos'] + list(df_filt['ESTADO'].unique()))
+if filtro_estado != 'Todos':
+    df_filt = df_filt[df_filt['ESTADO'] == filtro_estado]
 
-# Gráfico 2: Cantidad de viajes por estado
-st.write("Cantidad de viajes por estado:")
-fig_bar_estado = px.bar(df['ESTADO'].value_counts(), x=df['ESTADO'].value_counts().index, y=df['ESTADO'].value_counts().values)
-st.plotly_chart(fig_bar_estado)
+# Mostrar datos filtrados si hay datos restantes
+if not df_filt.empty:
+    st.write("Datos filtrados:")
+    st.write(df_filt)
 
-# Gráfico 3: Tiempo promedio de llegada por ruta
-st.write("Tiempo promedio de llegada por ruta:")
-fig_bar_ruta = px.bar(df.groupby('RUTA')['DIFERENCIA'].mean(), x=df.groupby('RUTA')['DIFERENCIA'].mean().index, y=df.groupby('RUTA')['DIFERENCIA'].mean().values, title='Tiempo promedio de llegada por ruta')
-st.plotly_chart(fig_bar_ruta)
+    # Gráfico de barras para el recuento de vehículos
+    fig_vehiculo = px.bar(df_filt['VEHICULO'].value_counts(), x=df_filt['VEHICULO'].value_counts().index, y=df_filt['VEHICULO'].value_counts().values, title='Recuento de Vehículos')
+    st.plotly_chart(fig_vehiculo)
 
-# Gráfico 4: Tiempo promedio de llegada por conductor
-st.write("Tiempo promedio de llegada por conductor:")
-fig_bar_conductor = px.bar(df.groupby('CONDUCTOR')['DIFERENCIA'].mean(), x=df.groupby('CONDUCTOR')['DIFERENCIA'].mean().index, y=df.groupby('CONDUCTOR')['DIFERENCIA'].mean().values, title='Tiempo promedio de llegada por conductor')
-st.plotly_chart(fig_bar_conductor)
+    # Gráfico de barras para el recuento de conductores
+    fig_conductor = px.bar(df_filt['CONDUCTOR'].value_counts(), x=df_filt['CONDUCTOR'].value_counts().index, y=df_filt['CONDUCTOR'].value_counts().values, title='Recuento de Conductores')
+    st.plotly_chart(fig_conductor)
+
+    # Gráfico de barras para el recuento de estados
+    fig_estado = px.bar(df_filt['ESTADO'].value_counts(), x=df_filt['ESTADO'].value_counts().index, y=df_filt['ESTADO'].value_counts().values, title='Recuento de Estados')
+    st.plotly_chart(fig_estado)
+else:
+    st.warning("No hay datos disponibles para los filtros seleccionados.")
