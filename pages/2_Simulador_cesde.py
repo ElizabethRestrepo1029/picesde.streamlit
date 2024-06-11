@@ -4,9 +4,53 @@ import plotly.figure_factory as ff
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 
-st.set_page_config(layout="wide")
+# Configurar el tema de Streamlit
+st.set_page_config(
+    page_title="Simulador Cesde",
+    page_icon=":fork_and_knife:",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-st.write("Simulador Cesde")
+# CSS para personalizar el estilo
+st.markdown("""
+    <style>
+        .main {
+            background-color: #829DC2;
+            color: #02153B;
+        }
+        .stSelectbox label, .stButton button, .stSlider label, .stTextInput label {
+            color: #02153B;
+        }
+        h1, h2, h3, h4 {
+            color: #02153B;
+        }
+        .css-1ekf893 {
+            background-color: #1f77b4;
+        }
+        .st-dx, .st-cn, .st-at {
+            border: 2px solid #1f77b4;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        header.css-18ni7ap {
+            background-color: #0C1449;
+        }
+        header.css-18ni7ap .css-1v0mbdj, header.css-18ni7ap .css-1rs6os {
+            color: #f0f2f6;
+        }
+    </style>
+""", unsafe_allow_html=True)
+# Título de la aplicación
+st.title("Simulador Cesde")
+
+multi = '''***Es una aplicación que permite visualizar el nivel academico que se mantiene actualmente.***
+
+***Segun su (:red[Nivel]), (:red[Grupos]), (:red[Jornadas]) y (:red[Momentos]).***
+'''
+st.markdown(multi)
+
+# Leer el archivo CSV
 try:
     df = pd.read_csv('static/cesde.csv')
 except FileNotFoundError:
@@ -40,6 +84,12 @@ with col4:
     jornadasU.insert(0, "Todos")
     optionJornada = st.selectbox('Jornada', (jornadasU))
 
+col5, col6 = st.columns(2)
+
+with col5:
+    submodulosU.insert(0, "Todos")
+    optionSubmodulo = st.selectbox('Submódulo', (submodulosU))
+
 # Filtrar los datos según las opciones seleccionadas
 filtered_data = df
 if optionGrupo != 'Todos':
@@ -53,6 +103,9 @@ if optionNivel != 'Todos':
 
 if optionJornada != 'Todos':
     filtered_data = filtered_data[filtered_data['JORNADA'] == optionJornada]
+
+if optionSubmodulo != 'Todos':
+    filtered_data = filtered_data[filtered_data['SUBMODULO'] == optionSubmodulo]
 
 # Crear el gráfico de barras
 if not filtered_data.empty:
@@ -92,3 +145,14 @@ if not filtered_data.empty:
     nivel_counts = filtered_data['NIVEL'].value_counts()
     fig4 = go.Figure(data=[go.Pie(labels=nivel_counts.index, values=nivel_counts.values)])
     st.plotly_chart(fig4, use_container_width=True)
+
+# Crear un gráfico de barras para el rendimiento promedio por Submódulo
+if optionSubmodulo == 'Todos' and not filtered_data.empty:
+    grouped_data = df.groupby('SUBMODULO')[['CONOCIMIENTO', 'DESEMPEÑO', 'PRODUCTO']].mean().reset_index()
+    fig_submodulo = go.Figure(data=[
+        go.Bar(name='CONOCIMIENTO', x=grouped_data['SUBMODULO'], y=grouped_data['CONOCIMIENTO']),
+        go.Bar(name='DESEMPEÑO', x=grouped_data['SUBMODULO'], y=grouped_data['DESEMPEÑO']),
+        go.Bar(name='PRODUCTO', x=grouped_data['SUBMODULO'], y=grouped_data['PRODUCTO'])
+    ])
+    fig_submodulo.update_layout(barmode='group', title='Rendimiento promedio por Submódulo')
+    st.plotly_chart(fig_submodulo, use_container_width=True)

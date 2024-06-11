@@ -13,7 +13,7 @@ st.markdown("""
     <style>
         /* Fondo y texto principal */
         .main {
-            background-color: #0C1449;
+            background-color: #060E3E;
             color: #f0f2f6;
         }
         /* Texto y elementos */
@@ -34,17 +34,26 @@ st.markdown("""
         }
         /* Barra superior */
         header.css-18ni7ap {
-            background-color: #0C1449;
+            background-color: #505C72;
         }
+            
+        .css-1aumxhk {
+        background-color: #505C72; /* Cambia el color del menú de páginas */
+        
         /* Configuración y texto de la barra superior */
         header.css-18ni7ap .css-1v0mbdj, header.css-18ni7ap .css-1rs6os {
-            color: #f0f2f6;
+            color: #505C72;
         }
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Proyecto Integrador Python")
-st.image("img/fondo.jpeg", caption="Disfruta de nuestro contenido")
-st.write("Elizabeth Restrepo")
+st.title("Bienvenido a nuestro Proyecto Integrador Python")
+st.image("img/fondo.jpeg")
+st.markdown("""
+    <div style="text-align: center; font-size: 18px; color: #F9FAFC;">
+        Disfruta de nuestro contenido
+    </div>
+""", unsafe_allow_html=True)
+st.write("Elizabeth Restrepo" )
 st.write("Richard Blanco")
 st.write("Norbey Hernandez")

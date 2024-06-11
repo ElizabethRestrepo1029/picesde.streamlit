@@ -43,7 +43,7 @@ st.markdown("""
 st.title("Restaurante")
 st.markdown("""
     <h2 style='text-align: center; color: #02153B; font-size: 24px'>Donde encontrarás varios tipos de comidas</h2>
-    <p style='text-align: center; font-size: 20px;'>🍖🍔🍹🍰</p>
+    <p style='text-align: center; font-size: px;'>🍖🍔🍹🍰</p>
 """, unsafe_allow_html=True)
 
 multi = '''***Es una aplicación para restaurante que permite la gestión integral de ventas.***

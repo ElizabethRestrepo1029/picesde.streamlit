@@ -1,55 +1,127 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # Configurar el tema de Streamlit
 st.set_page_config(
-    page_title="Control de rutas",
-    page_icon=":car:",
+    page_title="Simulador Cesde",
+    page_icon=":fork_and_knife:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Leer el archivo CSV
+# CSS para personalizar el estilo
+st.markdown("""
+    <style>
+        .main {
+            background-color: #000000;
+            color: #FFD700;
+        }
+        .stSelectbox label, .stButton button, .stSlider label, .stTextInput label {
+            color: #FFD700;
+        }
+        h1, h2, h3, h4 {
+            color: #FFD700;
+        }
+        .css-1ekf893 {
+            background-color: #A60D0D;
+        }
+        .st-dx, .st-cn, .st-at {
+            border: 2px solid #A60D0D;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        header.css-18ni7ap {
+            background-color: #A60D0D;
+        }
+        header.css-18ni7ap .css-1v0mbdj, header.css-18ni7ap .css-1rs6os {
+            color: #FFD700;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Título de la aplicación
+st.title("Simulador Cesde")
+
+# Leer el archivo CSV con manejo de errores de codificación
 try:
-    df = pd.read_csv('static/controlruta.csv')
+    df = pd.read_csv('static/controlruta.csv', encoding='latin1')
+except UnicodeDecodeError:
+    st.error("Error de decodificación con la codificación 'latin1'. Intentando con 'utf-8'.")
+    try:
+        df = pd.read_csv('static/controlruta.csv', encoding='utf-8')
+    except UnicodeDecodeError:
+        st.error("Error de decodificación con la codificación 'utf-8'. Asegúrate de que el archivo CSV tenga una codificación compatible.")
+        st.stop()
 except FileNotFoundError:
     st.error("El archivo de datos no se encontró. Asegúrate de que el archivo esté en la ruta correcta.")
     st.stop()
-# Filtrar y seleccionar solo las columnas relevantes
-df_filt = df[['VEHICULO', 'CONDUCTOR', 'ESTADO']]
 
-# Eliminar filas con valores nulos en las columnas seleccionadas
-df_filt = df_filt.dropna()
+# Filtrar las filas con horas no convertibles
+df = df.dropna(subset=['HORA DE INICIO', 'HORA ESTIMADA DE LLEGADA', 'HORA REAL DE LLEGADA'])
 
-# Filtros
-filtro_vehiculo = st.selectbox('Selecciona un vehículo:', ['Todos'] + list(df_filt['VEHICULO'].unique()))
-if filtro_vehiculo != 'Todos':
-    df_filt = df_filt[df_filt['VEHICULO'] == filtro_vehiculo]
+# Convertir las columnas de hora a datetime
+df['HORA DE INICIO'] = pd.to_datetime(df['HORA DE INICIO'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
+df['HORA ESTIMADA DE LLEGADA'] = pd.to_datetime(df['HORA ESTIMADA DE LLEGADA'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
+df['HORA REAL DE LLEGADA'] = pd.to_datetime(df['HORA REAL DE LLEGADA'], format='%d/%m/%Y %I:%M:%S %p', errors='coerce')
 
-filtro_conductor = st.selectbox('Selecciona un conductor:', ['Todos'] + list(df_filt['CONDUCTOR'].unique()))
-if filtro_conductor != 'Todos':
-    df_filt = df_filt[df_filt['CONDUCTOR'] == filtro_conductor]
+# Extraer mes, día y hora de la columna 'HORA DE INICIO'
+df['Mes'] = df['HORA DE INICIO'].dt.strftime('%Y-%m')
+df['Dia'] = df['HORA DE INICIO'].dt.date
+df['Hora'] = df['HORA DE INICIO'].dt.hour
 
-filtro_estado = st.selectbox('Selecciona un estado:', ['Todos'] + list(df_filt['ESTADO'].unique()))
-if filtro_estado != 'Todos':
-    df_filt = df_filt[df_filt['ESTADO'] == filtro_estado]
+# Obtener las opciones únicas de cada filtro
+vehiculosU = sorted(df['VEHICULO'].unique())
+conductoresU = sorted(df['CONDUCTOR'].unique())
+diasU = sorted(df['Dia'].unique())
+estadosU = sorted(df['ESTADO'].unique())
 
-# Mostrar datos filtrados si hay datos restantes
-if not df_filt.empty:
-    st.write("Datos filtrados:")
-    st.write(df_filt)
+# Configurar los selectores en cuatro columnas
+col1, col2, col3, col4 = st.columns(4)
 
-    # Gráfico de barras para el recuento de vehículos
-    fig_vehiculo = px.bar(df_filt['VEHICULO'].value_counts(), x=df_filt['VEHICULO'].value_counts().index, y=df_filt['VEHICULO'].value_counts().values, title='Recuento de Vehículos')
-    st.plotly_chart(fig_vehiculo)
+with col1:
+    optionVehiculo = st.selectbox('Vehículo', ['Todos'] + vehiculosU)
 
-    # Gráfico de barras para el recuento de conductores
-    fig_conductor = px.bar(df_filt['CONDUCTOR'].value_counts(), x=df_filt['CONDUCTOR'].value_counts().index, y=df_filt['CONDUCTOR'].value_counts().values, title='Recuento de Conductores')
-    st.plotly_chart(fig_conductor)
+with col2:
+    optionConductor = st.selectbox('Conductor', ['Todos'] + conductoresU)
 
-    # Gráfico de barras para el recuento de estados
-    fig_estado = px.bar(df_filt['ESTADO'].value_counts(), x=df_filt['ESTADO'].value_counts().index, y=df_filt['ESTADO'].value_counts().values, title='Recuento de Estados')
-    st.plotly_chart(fig_estado)
-else:
-    st.warning("No hay datos disponibles para los filtros seleccionados.")
+with col3:
+    optionFecha = st.date_input('Fecha', min_value=min(diasU), max_value=max(diasU), value=max(diasU))
+
+with col4:
+    optionEstado = st.selectbox('Estado', ['Todos'] + estadosU)
+
+# Filtrar los datos según las opciones seleccionadas
+filtered_data = df
+if optionVehiculo != "Todos":
+    filtered_data = filtered_data[filtered_data['VEHICULO'] == optionVehiculo]
+if optionConductor != "Todos":
+    filtered_data = filtered_data[filtered_data['CONDUCTOR'] == optionConductor]
+if optionFecha:
+    filtered_data = filtered_data[filtered_data['Dia'] == optionFecha]
+if optionEstado != "Todos":
+    filtered_data = filtered_data[filtered_data['ESTADO'] == optionEstado]
+
+# Gráficos
+# Gráfico de barras para el número de viajes por vehículo
+viajes_por_vehiculo = filtered_data.groupby('VEHICULO').size().reset_index(name='Count')
+fig_bar_vehiculo = px.bar(viajes_por_vehiculo, x='VEHICULO', y='Count', title='Número de Viajes por Vehículo')
+
+# Gráfico de barras para el número de viajes por conductor
+viajes_por_conductor = filtered_data.groupby('CONDUCTOR').size().reset_index(name='Count')
+fig_bar_conductor = px.bar(viajes_por_conductor, x='CONDUCTOR', y='Count', title='Número de Viajes por Conductor')
+
+# Gráfico de líneas para la evolución de llegadas a lo largo del tiempo
+llegadas_por_fecha = filtered_data.groupby('HORA DE INICIO')['DIFERENCIA'].sum().reset_index()
+fig_line = px.line(llegadas_por_fecha, x='HORA DE INICIO', y='DIFERENCIA', title='Evolución de Diferencia de Llegadas a lo Largo del Tiempo')
+
+# Gráfico de barras para el número de viajes por estado
+viajes_por_estado = filtered_data.groupby('ESTADO').size().reset_index(name='Count')
+fig_bar_estado = px.bar(viajes_por_estado, x='ESTADO', y='Count', title='Número de Viajes por Estado')
+
+# Mostrar los gráficos
+st.plotly_chart(fig_bar_vehiculo, use_container_width=True)
+st.plotly_chart(fig_bar_conductor, use_container_width=True)
+st.plotly_chart(fig_line, use_container_width=True)
+st.plotly_chart(fig_bar_estado, use_container_width=True)
